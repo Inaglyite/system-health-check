@@ -1,0 +1,66 @@
+# System Health Check - Default Configuration
+# All thresholds: value >= critical -> CRITICAL, value >= warning -> WARNING
+
+general:
+  sampling_interval: 1.0     # seconds for CPU usage sampling
+  output_dir: "."             # default report output directory
+
+cpu:
+  usage_percent:
+    warning: 80
+    critical: 95
+  temperature_celsius:
+    warning: 75
+    critical: 90
+
+memory:
+  usage_percent:
+    warning: 80
+    critical: 95
+  swap_percent:
+    warning: 50
+    critical: 80
+
+disk:
+  usage_percent:
+    warning: 80
+    critical: 95
+  inode_percent:              # Linux only
+    warning: 80
+    critical: 95
+
+smart:
+  # S.M.A.R.T. health status is binary: OK or CRITICAL
+  temperature_celsius:
+    warning: 45
+    critical: 60
+  reallocated_sectors:
+    warning: 1
+    critical: 10
+  pending_sectors:
+    warning: 1
+    critical: 5
+  uncorrectable_sectors:
+    warning: 1
+    critical: 5
+
+network:
+  ping_targets:
+    - 8.8.8.8
+    - 1.1.1.1
+  ping_count: 3
+  ping_timeout: 2.0
+  packet_loss_percent:
+    warning: 10
+    critical: 30
+  latency_ms:
+    warning: 100
+    critical: 500
+
+temperature:
+  cpu_celsius:
+    warning: 75
+    critical: 90
+  gpu_celsius:
+    warning: 80
+    critical: 95

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "healthcheck"
+version = "0.1.0"
+description = "Cross-platform system health check tool"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "psutil>=5.9.0",
+    "rich>=13.0.0",
+    "PyYAML>=6.0",
+]
+
+[project.scripts]
+healthcheck = "healthcheck.main:main"
+
+[tool.setuptools.packages.find]
+include = ["healthcheck*"]

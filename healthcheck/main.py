@@ -198,8 +198,8 @@ Examples:
         type=str,
         default=None,
         help=(
-            "Override thresholds, format: "
-            "key1=value1,key2=value2. "
+            "Override thresholds, format: key=value pairs separated by commas. "
+            "Value can be a number (critical only) or 'warn/c crit'. "
             "Keys: cpu_percent, memory_percent, disk_percent, "
             "swap_percent, cpu_celsius, gpu_celsius"
         ),
@@ -223,22 +223,29 @@ Examples:
     return parser
 
 
-def parse_overrides(override_str: str | None) -> dict[str, float]:
+def parse_overrides(override_str: str | None) -> dict[str, float | str]:
     """Parse --threshold-override string into dict.
 
     Format: "key1=value1,key2=value2"
+    Each value is either a number (treated as critical) or "warning/critical".
     """
     if not override_str:
         return {}
-    overrides: dict[str, float] = {}
+    overrides: dict[str, float | str] = {}
     for part in override_str.split(","):
         part = part.strip()
         if "=" in part:
             key, val = part.split("=", 1)
-            try:
-                overrides[key.strip()] = float(val.strip())
-            except ValueError:
-                print(f"Warning: invalid override value '{part}'", file=sys.stderr)
+            key = key.strip()
+            val = val.strip()
+            if "/" in val:
+                # warning/critical form — keep as string, validated by Config
+                overrides[key] = val
+            else:
+                try:
+                    overrides[key] = float(val)
+                except ValueError:
+                    print(f"Warning: invalid override value '{part}'", file=sys.stderr)
     return overrides
 
 

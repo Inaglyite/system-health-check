@@ -37,6 +37,16 @@ pyinstaller healthcheck-gui.spec --clean --noconfirm
 
 输出：`dist/healthcheck-gui.exe`
 
+## 开发
+
+```bash
+# 安装开发依赖
+pip install -r requirements.txt pytest
+
+# 运行测试
+python -m pytest tests/ -v
+```
+
 ## 项目结构
 
 ```

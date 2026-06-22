@@ -17,6 +17,30 @@ from .dataclasses import Threshold
 # Default config bundled with the package
 _DEFAULT_CONFIG_PATH = Path(__file__).parent / "config.yaml"
 
+# Map CLI override keys (what users pass via --threshold-override) to the dotted
+# metric paths they should affect. Users may write either form; both work.
+_OVERRIDE_ALIASES: dict[str, list[str]] = {
+    "cpu_percent": ["cpu.usage_percent"],
+    "cpu_celsius": ["cpu.temperature_celsius"],
+    "memory_percent": ["memory.usage_percent"],
+    "swap_percent": ["memory.swap_percent"],
+    "disk_percent": ["disk.usage_percent"],
+    "inode_percent": ["disk.inode_percent"],
+    "smart_temp_celsius": ["smart.temperature_celsius"],
+    "packet_loss_percent": ["network.packet_loss_percent"],
+    "latency_ms": ["network.latency_ms"],
+    "gpu_celsius": ["temperature.gpu_celsius"],
+}
+
+
+def _override_warning(critical: float) -> float:
+    """Derive a sane warning level from a critical level when only one is given.
+
+    Uses 80% of critical, clamped to a reasonable range so tiny or huge
+    critical values still produce a useful warning band.
+    """
+    return round(min(critical * 0.8, critical - 5), 1)
+
 
 class Config:
     """Health check configuration with threshold definitions.
@@ -69,12 +93,18 @@ class Config:
         """Get threshold for a metric by dotted path (e.g., 'cpu.usage_percent').
 
         Checks overrides first, then config data.
+
+        Overrides may be supplied in any of these forms per key:
+            "cpu_percent" -> 90                  # critical only; warning derived
+            "cpu_percent" -> "80/90"             # warning/critical as string
+            "cpu.usage_percent" -> 90            # full dotted path also accepted
+        The CLI key (e.g. 'cpu_percent') is matched via _OVERRIDE_ALIASES so it
+        resolves to the same threshold as the dotted metric path.
         """
-        # Check overrides (simple key lookup)
-        key = metric_path.split(".")[-1]  # e.g., 'cpu_percent' from 'cpu.usage_percent'
-        if key in self._overrides:
-            val = self._overrides[key]
-            return Threshold(warning=val * 0.7, critical=val)
+        if self._overrides:
+            threshold = self._lookup_override(metric_path)
+            if threshold is not None:
+                return threshold
 
         # Navigate nested config
         parts = metric_path.split(".")
@@ -87,6 +117,35 @@ class Config:
         except (KeyError, TypeError):
             pass
         return None
+
+    def _lookup_override(self, metric_path: str) -> Optional[Threshold]:
+        """Find an override value matching the given metric path, if any.
+
+        Tries the full dotted path, the last segment, and any alias that maps
+        to the dotted path. Returns None if no override applies.
+        """
+        candidates: list[str] = [metric_path, metric_path.split(".")[-1]]
+        # Add CLI alias keys whose dotted path equals metric_path
+        for alias, paths in _OVERRIDE_ALIASES.items():
+            if metric_path in paths:
+                candidates.append(alias)
+
+        for key in candidates:
+            if key in self._overrides:
+                return self._coerce_override(self._overrides[key])
+        return None
+
+    @staticmethod
+    def _coerce_override(val: Any) -> Threshold:
+        """Coerce a raw override value into a Threshold.
+
+        Accepts a number (treated as critical) or a 'warning/critical' string.
+        """
+        if isinstance(val, str) and "/" in val:
+            w_str, c_str = val.split("/", 1)
+            return Threshold(warning=float(w_str), critical=float(c_str))
+        critical = float(val)
+        return Threshold(warning=_override_warning(critical), critical=critical)
 
     def get(self, path: str, default: Any = None) -> Any:
         """Get arbitrary config value by dotted path."""

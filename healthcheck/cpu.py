@@ -48,7 +48,7 @@ def _get_cpu_info_windows() -> dict[str, Any]:
             info["l2_cache"] = cpu.get("L2CacheSize", 0)
             info["l3_cache"] = cpu.get("L3CacheSize", 0)
             info["socket"] = cpu.get("SocketDesignation", "")
-    except (subprocess.TimeoutExpired, Exception):
+    except Exception:
         pass
     return info
 

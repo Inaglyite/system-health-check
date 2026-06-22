@@ -268,18 +268,26 @@ def _collect_smart_linux(config: Config) -> tuple[list[MetricValue], dict[str, A
             # Device info
             model = data.get("model_name", "") or data.get("model_family", "")
             serial = data.get("serial_number", "")
+            capacity_gb: float = 0.0
             capacity = data.get("user_capacity", "")
             if capacity:
-                capacity_gb = round(
-                    int(capacity.replace(",", "").split()[0]) / 1e9, 1
-                ) if capacity else 0
+                try:
+                    capacity_gb = round(
+                        int(capacity.replace(",", "").split()[0]) / 1e9, 1
+                    )
+                except (ValueError, IndexError):
+                    capacity_gb = 0.0
 
+            if model:
+                detail = f"{msg} ({model}, {capacity_gb:.1f} GB)"
+            else:
+                detail = msg
             metrics.append(
                 MetricValue(
                     name=f"smart_health_{device_name}",
                     value=None,
                     status=status,
-                    message=f"{msg} ({model}, {capacity_gb:.1f} GB)" if model else msg,
+                    message=detail,
                     extra={
                         "device": device,
                         "model": model,

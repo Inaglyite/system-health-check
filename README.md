@@ -6,7 +6,8 @@
 
 下载 [healthcheck-gui.exe](../../releases/latest)，双击运行即可。无需安装 Python！
 
-> ⚠️ **注意**：Release 中的 exe 是 v0.1.0 旧版本，**不包含** `--threshold-override` 修复和 SMART 模块的 bug 修复。如需最新代码，请用下面的[命令行方式](#命令行使用)或从源码运行。新版本 exe 将在下次 Windows 环境打包后更新。
+> 最新版本：**v0.1.1**（修复了 `--threshold-override` 失效和 SMART 模块的 bug）。  
+> 校验：`sha256sum healthcheck-gui.exe` 应为 `1d158a59676825b60a1f58d4a43b68b40ccbb7ce1fa5922ae53c08579812c634`
 
 ## 命令行使用
 
